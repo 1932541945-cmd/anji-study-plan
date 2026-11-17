@@ -55,8 +55,22 @@ const nextBase=[
 [['职测·已学模块复习','从言语、判断、资料、数量中各选2道学过的基础题，边做边口述方法','8',45],['综合应用能力·论述评价','看一份论述评价示范，拆分观点、依据和评价理由','1',30],['周复盘','根据错因选择要回看的课程，不会的题先补讲解再重做','0',15]],
 [['阶段自查·职业能力倾向测验','对已学模块做10道基础题，不限时，记录需要回看课程的题型','10',40],['阶段自查·综合应用能力','完成1道短概括或案例提纲，对照范例复盘材料依据','1',35],['周复盘','汇总正确率和听课疑问，安排下周巩固或进阶','0',15]]];
 function makeWeek(start,num,scale=1){let curriculum=num===1?base:nextBase;return{number:num,start,days:curriculum.map((arr,i)=>{let tasks=arr.map(([subject,title,q,minutes])=>({id:id(),subject,title,questions:Math.round(+q*scale),minutes:+minutes})),sum=tasks.reduce((a,t)=>a+t.minutes,0),limit=+(data?.settings?.dailyMinutes||90);if(sum>limit){let ratio=limit/sum;tasks.forEach(t=>t.minutes=Math.max(5,Math.floor(t.minutes*ratio)))}return{date:plus(start,i),tasks}})}}
-function fresh(){return{settings:{examDate:'',dailyMinutes:90,subjects:['职业能力倾向测验','综合应用能力']},weeks:[makeWeek(today(),1)],activeWeek:0,logs:{},mistakes:[],assessments:[],planVersion:4}}
+function fresh(){return{settings:{examDate:'',dailyMinutes:90,subjects:['职业能力倾向测验','综合应用能力']},weeks:[makeWeek(today(),1)],activeWeek:0,logs:{},mistakes:[],assessments:[],planVersion:5}}
 let data;try{data=JSON.parse(localStorage.getItem(KEY))||fresh()}catch{data=fresh()}if(!data.weeks?.length)data=fresh();data.assessments=data.assessments||[];if((data.planVersion||0)<4){data.settings=data.settings||{};if((data.settings.subjects||[]).some(s=>s.includes('职业能力倾向测验')||s.includes('综合应用能力')))data.settings.subjects=['职业能力倾向测验','综合应用能力'];data.weeks=data.weeks.map(w=>{let hasActivity=w.days.some(d=>Object.keys(data.logs?.[d.date]?.done||{}).length||data.logs?.[d.date]?.minutes||data.logs?.[d.date]?.questions);if(hasActivity)return w;let curriculum=w.number===1?base:nextBase;return{...w,days:w.days.map((d,i)=>({...d,tasks:curriculum[i%7].map(x=>({id:id(),subject:x[0],title:x[1],questions:+x[2],minutes:+x[3]}))}))}});data.planVersion=4}
+if((data.planVersion||0)<5){
+ data.planHistory=data.planHistory||[];
+ data.weeks=data.weeks.map(w=>({...w,days:w.days.map((d,i)=>{
+ const legacy=d.tasks.some(t=>/每类先做3题|整理8个概念|管理角色与分析判断|五模块基础小测|认识常识判断范围|主旨概括与逻辑填空基础；/.test(t.title));
+ if(!legacy)return d;
+ data.planHistory.push({date:d.date,tasks:d.tasks,reason:'切换先学后练计划'});
+ const learned=w.number===1?base:nextBase;
+ return {...d,tasks:learned[i%7].map(x=>({id:id(),subject:x[0],title:x[1],questions:+x[2],minutes:+x[3]}))};
+ })}));
+ if((data.settings.subjects||[]).join('|')==='公共基础知识|职测|申论|环境专业知识|湖州/安吉地方与岗位')data.settings.subjects=['职业能力倾向测验','综合应用能力'];
+ data.planVersion=5;
+ localStorage.setItem(KEY,JSON.stringify(data));
+}
+
 const save=()=>localStorage.setItem(KEY,JSON.stringify(data)),week=()=>data.weeks[data.activeWeek]||data.weeks[0],log=s=>data.logs[s]||{minutes:0,questions:0,correct:0,weak:'',done:{}};
 function toast(x){let t=document.querySelector('#toast');t.textContent=x;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
 function findDay(s=today()){for(const w of data.weeks){let d=w.days.find(x=>x.date===s);if(d)return d}return week().days[0]}
