@@ -111,6 +111,8 @@ function showMaterialForm(m={}){
  $('materialForm').hidden=false;$('matTitle').focus();
 }
 function renderMaterials(){
+ if(location.search.includes('v=uncollect')&&!db.removedAccidentalYucun){db.materials=(db.materials||[]).filter(m=>m.id!=='case-安吉余村 · 绿色转型');db.removedAccidentalYucun=true;save()}
+
  if(!db.yucunSampleAdded){db.materials??=[];if(!db.materials.some(m=>m.id==='example-yucun-writing'))db.materials.unshift({"id":"example-yucun-writing","date":"2026-11-23","title":"示例｜安吉余村如何兼顾生态保护与村民生计","theme":"生态文明、乡村振兴、绿色转型","fact":"余村过去依靠开矿发展经济，村民也承受着粉尘等影响。村里陆续关停矿山和水泥厂后，原先在矿上开拖拉机的潘春林办起了农家乐。刚起步时，生态尚未恢复，生意也较冷清。","source":"国家林业和草原局《余村“两山”实践历程与启示》 https://www.forestry.gov.cn/c/www/lcdt/683721.jhtml\n平安浙江网《从“卖石头”到“卖风景”，20年的法治守护》 https://www.pazjw.gov.cn/duiwujianshe/202604/t20260427_31630312.shtml","idea":"分论点：推动绿色转型，要把生态修复和群众生计一起谋划。\n示范段：一座矿山可以关停，村民的日子还要继续。安吉余村关矿后，曾在矿上开拖拉机的村民转而办起农家乐，起初客人却不多。这个细节提醒我们，生态改善需要时间，新产业也需要培育。推进转型，既要治理旧产业留下的环境问题，也要为群众学习新技能、寻找新收入创造条件。"});db.yucunSampleAdded=true;save()}
 
  const list=$('matList');list.replaceChildren();const all=db.materials||[],q=$('matSearch').value.trim().toLowerCase();
@@ -126,7 +128,7 @@ function renderMaterials(){
  if(idea){const lines=idea.split('\n');const example=lines.findIndex(v=>/^示范段[：:]/.test(v));if(example>0){add(body,'h4','分论点');add(body,'p',lines.slice(0,example).join('\n').replace(/^分论点[：:]/,''));add(body,'h4','作文示范段');add(body,'p',lines.slice(example).join('\n').replace(/^示范段[：:]/,''))}else{add(body,'h4','我的写法');add(body,'p',idea)}}
  if(m.source){let src=add(body,'details','','mat-source');add(src,'summary','查看出处');for(const line of m.source.split('\n')){const match=line.match(/^(.*?)\s*(https?:\/\/\S+)\s*$/i);if(match){const link=add(src,'a',match[1].trim()||match[2]);link.href=match[2];link.target='_blank';link.rel='noopener noreferrer'}else add(src,'p',line)}}
  if(m.date)add(body,'small',m.date);
- const edit=document.createElement('button');edit.textContent='编辑素材';edit.onclick=()=>showMaterialForm(m);body.append(edit);list.append(d)}
+ const edit=document.createElement('button');edit.textContent='编辑素材';edit.onclick=()=>showMaterialForm(m);body.append(edit);if(String(m.id).startsWith("case-")){const remove=document.createElement("button");remove.textContent="取消收藏";remove.onclick=()=>{if(!confirm("从素材库移除这条收藏？"))return;db.materials=db.materials.filter(item=>item.id!==m.id);save();renderMaterials()};body.append(remove)}list.append(d)}
  if(!list.children.length)list.textContent=all.length?'没有找到匹配的素材。':'还没有素材。可以新增一条，或从每日作文练笔收藏案例。';
 }
 $('newMaterial').onclick=()=>showMaterialForm();$('cancelMaterial').onclick=()=>$('materialForm').hidden=true;$('matSearch').oninput=renderMaterials;
@@ -235,6 +237,7 @@ if(!sessions.some(x=>x.id===id)){db.logs[date]={...log,minutes:(Number(log.minut
 renderToday();stats();switchTab('records');}}
 })();
 </script></body></html>
+
 
 
 
