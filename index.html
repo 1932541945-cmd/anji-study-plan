@@ -27,8 +27,8 @@
 <script>
 (()=>{'use strict';const KEY='anji-a-2h-v2',OLD='anji-exam-offline-v1', $=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0'),iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,parse=s=>new Date(s+'T12:00:00'),plus=(s,n)=>{let d=parse(s);d.setDate(d.getDate()+n);return iso(d)},days=(a,b)=>Math.round((parse(a)-parse(b))/86400000),fmt=s=>parse(s).toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'}),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const fresh=()=>({start:'2026-11-18',exam:'',checks:{},logs:{},mistakes:[],courseChecks:{},overrides:{},assessments:[],courseProgress:{},daily:120});let db;try{db=JSON.parse(localStorage.getItem(KEY))||fresh()}catch(e){db=fresh()}db={...fresh(),...db};const save=()=>localStorage.setItem(KEY,JSON.stringify(db));let selected=iso(new Date())<db.start?db.start:iso(new Date()),shownWeek=0;
-const courses=['郭熙·言语理解','林凡·数量关系','花生十三·逻辑推理','花生十三·资料分析','龙飞·图形推理','聂佳·类比推理','白鹭·材料作文','小黑·政治理论','小黑·常识判断'];
-const roadmap=[['第1—4周','言语入门','郭熙言语基础课为主，穿插花生十三资料分析和浙江综应材料阅读。'],['第5—6周','判断推理','花生十三逻辑推理、龙飞图形推理、聂佳类比推理；继续练浙江综应材料分析。'],['第7—9周','数量与资料','林凡数量关系、花生十三资料分析；复习言语和判断。'],['第10—12周','巩固与阶段检测','小黑政治理论和常识，白鹭材料作文；另练浙江综应案例分析、论述评价和校阅改错。']];
+const courses=['郭熙·言语理解','林凡·数量关系','花生十三·逻辑推理','林凡·资料分析','龙飞·图形推理','聂佳·类比推理','白鹭·材料作文','小黑·政治理论','小黑·常识判断'];
+const roadmap=[['第1—4周','言语入门','郭熙言语基础课为主，穿插林凡资料分析和浙江综应材料阅读。'],['第5—6周','判断推理','花生十三逻辑推理、龙飞图形推理、聂佳类比推理；继续练浙江综应材料分析。'],['第7—9周','数量与资料','林凡数量关系、林凡资料分析；复习言语和判断。'],['第10—12周','巩固与阶段检测','小黑政治理论和常识，白鹭材料作文；另练浙江综应案例分析、论述评价和校阅改错。']];
 const guoTopics=['转折关系、主题词','因果关系、必要条件的典型格式、正面提对策','反面提对策、文段无对策、并列关系','分述句特征、细节判断','接语选择、语句填空','语句排序','词的辨析','关联关系、解释对应','形象表达、无标志对应'];
 function guoDay(day){
  const lesson=Math.floor(day/3),part=day%3,step=lesson===5?40:50;
@@ -37,13 +37,17 @@ function guoDay(day){
 function general(day){
  const w=Math.floor(day/7),d=day%7;
  const main=w<4?[0,0,0,0,0,3,0]:w<6?[2,4,5,2,4,5,0]:w<9?[1,3,1,3,1,3,0]:[7,8,6,0,3,2,6];
- const side=['浙江综应：读材料，圈题目要求与事实','浙江综应：提取关键信息并归纳','花生十三·资料分析：读表与基础概念','浙江综应：案例分析，核对材料依据','龙飞·图形推理：跟做基础例题','浙江综应：校阅改错或论述评价','浙江综应：复盘材料阅读与表达'];
+ const side=['浙江综应：读材料，圈题目要求与事实','浙江综应：提取关键信息并归纳','林凡·资料分析：读表与基础概念','浙江综应：案例分析，核对材料依据','龙飞·图形推理：跟做基础例题','浙江综应：校阅改错或论述评价','浙江综应：复盘材料阅读与表达'];
  return [['主课',day<27?guoDay(day):day===27?'郭熙·言语理解｜补听未完成片段，重做两道最容易错的例题':courses[main[d]]+'：从上次停下的位置继续，跟做例题',65],['副科',side[d],35],['练习复盘',d===6?'整理错因和下周重点':day===0?'复述本节方法，重做一道课上例题':'先跟做例题，听懂后再做3—5道对应基础题',20]];
 }
 
 function renderAssessments(){$('assList').innerHTML=db.assessments.map(a=>'<div class="module">'+esc(a.date)+' · '+esc(a.subject)+' · '+a.score+'分 / '+a.minutes+'分钟<p>'+esc(a.note)+'</p></div>').join('')}
 function initLatest(){
  db.overrides=db.overrides||{};db.assessments=db.assessments||[];db.courseProgress=db.courseProgress||{};
+ for(const [date,items] of Object.entries(db.overrides)){
+ if(!Array.isArray(items))continue;
+ for(const task of items)if(!db.checks[task.id]&&typeof task.title==='string')task.title=task.title.replace(/花生十三(·?)资料分析/g,'林凡$1资料分析');
+ }
  if(!db.migratedPublished){try{let old=JSON.parse(localStorage.getItem(OLD)||'null');if(old){Object.entries(old.logs||{}).forEach(([s,l])=>{if(!db.logs[s])db.logs[s]={minutes:+l.minutes||0,questions:+l.questions||0,correct:+l.correct||0,weak:l.weak||''}});db.mistakes.push(...(old.mistakes||[]).map(m=>({module:m.subject||'旧版',topic:m.topic,why:m.text,fix:m.answer,done:!!m.done})));db.assessments.push(...(old.assessments||[]));db.legacyBackup=old}db.migratedPublished=true;save()}catch(e){}}
  $('dailyMinutes').value=db.daily||120;$('editDate').value=selected;$('assDate').value=iso(new Date());
  $('loadTasks').onclick=()=>{$('editTasks').value=originalTasks($('editDate').value).map(t=>[t.subject,t.title,t.minutes].join(' | ')).join('\n')};
@@ -253,4 +257,5 @@ if(!sessions.some(x=>x.id===id)){db.logs[date]={...log,minutes:(Number(log.minut
 renderToday();stats();switchTab('records');}}
 })();
 </script></body></html>
+
 
