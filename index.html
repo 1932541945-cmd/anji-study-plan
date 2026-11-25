@@ -74,9 +74,15 @@ function originalTasks(s){if(db.overrides?.[s]&&!db.overrides[s].every(t=>t.id.i
 function uniqueTasks(items){return [...new Map(items.map(t=>[t.id,t])).values()]}
 const essayStart='2026-11-24';
 const essayTitle='与 ChatGPT 老师跟练综应大作文';
+function hasEssayPractice(date){
+ if(checked(date+'-essay-coach'))return true;
+ if(date<essayStart||date<db.start)return false;
+ const position=days(date,essayStart)%5;
+ return position===0||position===3;
+}
 function tasks(date){
  const list=baseTasks(date);
- if(date>=essayStart&&date>=db.start)list.push({id:date+'-essay-coach',subject:'综应大作文',title:essayTitle,minutes:45,origin:date,essay:true});
+ if(hasEssayPractice(date))list.push({id:date+'-essay-coach',subject:'综应大作文',title:essayTitle,minutes:45,origin:date,essay:true});
  return list;
 }
 function baseTasks(date){
@@ -156,7 +162,7 @@ $('newMaterial').onclick=()=>showMaterialForm();$('cancelMaterial').onclick=()=>
 $('materialForm').onsubmit=e=>{e.preventDefault();db.materials??=[];let m=db.materials.find(x=>x.id===editedMaterial);if(!m){m={id:Date.now(),date:iso(new Date())};db.materials.unshift(m)}
  Object.assign(m,{title:$('matTitle').value.trim(),theme:$('matTheme').value.trim(),fact:$('matFact').value.trim(),idea:$('matIdea').value.trim(),source:$('matSource').value.trim()});save();$('materialForm').hidden=true;$('matSearch').value='';renderMaterials()};
 
-function renderToday(){$('dailyPill').textContent=((db.daily||120)+(selected>=essayStart&&selected>=db.start?45:0))+'分钟';let t=tasks(selected),n=t.filter(x=>checked(x.id)).length;$('todayDate').textContent=fmt(selected)+(days(selected,db.start)<0?' · 尚未开始':' · 第'+(Math.floor(days(selected,db.start)/7)+1)+'周');$('todayBar').style.width=(t.length?n/t.length*100:0)+'%';$('todayList').innerHTML=t.length?t.map(x=>`<label class="task ${checked(x.id)?'done':''}"><input type="checkbox" data-check="${x.id}" ${checked(x.id)?'checked':''}><div><span class="tag">${esc(x.subject)}${x.moved?' · 已顺延':x.origin<selected?' · 顺延自 '+x.origin:''} · ${x.essay?'40–50':x.minutes}分钟</span><strong>${esc(x.title)}</strong><p>${x.essay?'接着上次的进度，先独立写一段，再请老师批改，最后按反馈重写。':x.minutes===65?'先理解知识点，必要时暂停回看':x.minutes===35?'结合A类目标循序学习':'少量练习，写清错误原因'}</p></div></label>`).join(''):`<p class="muted">${selected<db.start?'计划尚未开始。':'当天没有已打卡任务，未完成项已顺延。'}</p>`;document.querySelectorAll('[data-check]').forEach(e=>e.onchange=()=>{db.finishedDates??={};if(e.checked)db.finishedDates[e.dataset.check]=selected;else delete db.finishedDates[e.dataset.check];db.checks[e.dataset.check]=e.checked;save();renderToday();stats()});let l=db.logs[selected]||{};$('minutes').value=l.minutes??'';$('questions').value=l.questions??'';$('correct').value=l.correct??'';$('weak').value=l.weak??''}
+function renderToday(){$('dailyPill').textContent=((db.daily||120)+(hasEssayPractice(selected)?45:0))+'分钟';let t=tasks(selected),n=t.filter(x=>checked(x.id)).length;$('todayDate').textContent=fmt(selected)+(days(selected,db.start)<0?' · 尚未开始':' · 第'+(Math.floor(days(selected,db.start)/7)+1)+'周');$('todayBar').style.width=(t.length?n/t.length*100:0)+'%';$('todayList').innerHTML=t.length?t.map(x=>`<label class="task ${checked(x.id)?'done':''}"><input type="checkbox" data-check="${x.id}" ${checked(x.id)?'checked':''}><div><span class="tag">${esc(x.subject)}${x.moved?' · 已顺延':x.origin<selected?' · 顺延自 '+x.origin:''} · ${x.essay?'40–50':x.minutes}分钟</span><strong>${esc(x.title)}</strong><p>${x.essay?'每隔2–3天跟练一次。接着上次的进度，先独立写一段，再请老师批改，最后按反馈重写。':x.minutes===65?'先理解知识点，必要时暂停回看':x.minutes===35?'结合A类目标循序学习':'少量练习，写清错误原因'}</p></div></label>`).join(''):`<p class="muted">${selected<db.start?'计划尚未开始。':'当天没有已打卡任务，未完成项已顺延。'}</p>`;document.querySelectorAll('[data-check]').forEach(e=>e.onchange=()=>{db.finishedDates??={};if(e.checked)db.finishedDates[e.dataset.check]=selected;else delete db.finishedDates[e.dataset.check];db.checks[e.dataset.check]=e.checked;save();renderToday();stats()});let l=db.logs[selected]||{};$('minutes').value=l.minutes??'';$('questions').value=l.questions??'';$('correct').value=l.correct??'';$('weak').value=l.weak??''}
 function stats(){let weekStart=plus(db.start,Math.max(0,Math.floor(days(selected,db.start)/7))*7),all=uniqueTasks(Array.from({length:7},(_,i)=>tasks(plus(weekStart,i))).flat()),done=all.filter(t=>checked(t.id)).length;$('statDone').textContent=(all.length?Math.round(done/all.length*100):0)+'%';let logs=Object.values(db.logs);$('statTime').textContent=logs.reduce((a,l)=>a+(+l.minutes||0),0)+'分';$('statQ').textContent=logs.reduce((a,l)=>a+(+l.questions||0),0)+'题'}
 function renderWeek(){let start=plus(db.start,shownWeek*7);$('weekNum').textContent=`第${shownWeek+1}周`;let content='';for(let i=0;i<7;i++){let s=plus(start,i);content+=`<div class="weekday"><div class="weekhead"><strong>${fmt(s)}</strong><button class="btn light" data-jump="${s}">查看/打卡</button></div><div class="weekbody">${tasks(s).map(t=>`<p>${t.moved?'已顺延 · ':t.origin<s?'顺延自 '+t.origin+' · ':'· '}${esc(t.title)} <span class="muted">(${t.essay?'40–50':t.minutes}分)</span></p>`).join('')}</div></div>`}$('weekList').innerHTML=content;document.querySelectorAll('[data-jump]').forEach(e=>e.onclick=()=>{selected=e.dataset.jump;switchTab('today');renderToday();stats()})}
 function renderRoadmap(){$('roadmapList').innerHTML='<h2>12周基础路线</h2>'+roadmap.map(r=>`<div class="module"><span class="pill">${r[0]}</span><h3>${r[1]}</h3><p class="muted">${r[2]}</p></div>`).join('')+'<div class="note">周数是阶段目标，不是强制课表。前四周未学完言语基础，可以顺延，不要跳课赶进度。</div>';$('courseList').innerHTML=courses.map((c,i)=>`<label class="task ${db.courseChecks[c]?'done':''}"><input type="checkbox" data-course="${c}" ${db.courseChecks[c]?'checked':''}><div><strong>${c}</strong><p>${'完成后打卡'}</p></div></label>`).join('');document.querySelectorAll('[data-course]').forEach(e=>e.onchange=()=>{db.courseChecks[e.dataset.course]=e.checked;save();renderRoadmap()})}
@@ -264,6 +270,7 @@ if(!sessions.some(x=>x.id===id)){db.logs[date]={...log,minutes:(Number(log.minut
 renderToday();stats();switchTab('records');}}
 })();
 </script></body></html>
+
 
 
 
