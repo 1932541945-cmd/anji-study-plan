@@ -121,6 +121,12 @@ function renderMaterials(){
 
  if(!db.yucunSampleAdded){db.materials??=[];if(!db.materials.some(m=>m.id==='example-yucun-writing'))db.materials.unshift({"id":"example-yucun-writing","date":"2026-11-23","title":"示例｜安吉余村如何兼顾生态保护与村民生计","theme":"生态文明、乡村振兴、绿色转型","fact":"余村过去依靠开矿发展经济，村民也承受着粉尘等影响。村里陆续关停矿山和水泥厂后，原先在矿上开拖拉机的潘春林办起了农家乐。刚起步时，生态尚未恢复，生意也较冷清。","source":"国家林业和草原局《余村“两山”实践历程与启示》 https://www.forestry.gov.cn/c/www/lcdt/683721.jhtml\n平安浙江网《从“卖石头”到“卖风景”，20年的法治守护》 https://www.pazjw.gov.cn/duiwujianshe/202604/t20260427_31630312.shtml","idea":"分论点：推动绿色转型，要把生态修复和群众生计一起谋划。\n示范段：一座矿山可以关停，村民的日子还要继续。安吉余村关矿后，曾在矿上开拖拉机的村民转而办起农家乐，起初客人却不多。这个细节提醒我们，生态改善需要时间，新产业也需要培育。推进转型，既要治理旧产业留下的环境问题，也要为群众学习新技能、寻找新收入创造条件。"});db.yucunSampleAdded=true;save()}
 
+ if(!db.lessonTwoEssayCards){
+   db.materials??=[];
+   const cards=[{"id":"tiantong-song-1125","title":"宁波天童村《天童四季》","theme":"群众主体性、文化赋能、乡村振兴、文化与产业融合","fact":"宁波天童村的高龄农民乐手与专业文艺工作者、文化特派员共同创作《天童四季》，作品上线全球200多个音乐平台，探索音乐赋能文旅发展的路径。","mechanism":"专业力量提供创作支持，村民参与使作品承载乡土记忆与生活情感；借助现代传播渠道，乡村文化资源有望转化为文旅发展优势。","idea":"分论点：激发群众主体活力，为乡村文化振兴培育内生动力。\n示范段：宁波天童村通过专业文艺力量与本土农民乐手共同创作，让村民成为乡村文化的创造者。这启示我们，文化振兴既要借助外部资源，更要激发群众的创造活力，让乡土文化在群众参与中实现传承与发展。","source":"浙江宣传《村歌村戏何以嘹亮》；据第二课素材卡片整理。案例沿用课堂记录，机制分析与考场示范为原创教学提炼。","date":"2026-11-25"},{"id":"dachen-song-1125","title":"衢州江山大陈村","theme":"基层治理、文明乡风、治理方式创新、以文化人","fact":"大陈村将孝亲敬老等理念以及村规民约融入村歌，通过村民传唱推动文明乡风建设。","mechanism":"相较于单纯说教，群众熟悉且乐于接受的文艺形式能够降低规则传播的门槛，使文明理念更自然地融入日常生活，有助于促进群众自觉遵守公共规范。","idea":"分论点：发挥文化浸润作用，让文明理念转化为群众的自觉行动。\n示范段：衢州江山大陈村将村规民约融入村歌，让文明理念通过群众喜闻乐见的方式进入日常生活。这种做法启示我们，基层治理不仅需要制度约束，也需要通过文化浸润促进群众由了解规则走向认同规则。","source":"浙江宣传《村歌村戏何以嘹亮》；据第二课素材卡片整理。案例沿用课堂记录，机制分析与考场示范为原创教学提炼。","date":"2026-11-25"},{"id":"village-phrases-1125","title":"观点与表达速记","theme":"群众需求、群众主体、长效发展、守正创新、基层治理","idea":"案例事实 → 机制分析 → 回扣观点\n群众需求｜坚持以群众需求为导向，让公共文化服务真正深入人心。\n群众主体｜激发群众主体活力，为乡村文化振兴培育内生动力。\n长效发展｜推动文化活动融入日常生活，实现由短期热闹向长效发展的转变。\n守正创新｜坚守乡土文化根脉，以创新表达赋予传统文化新的生命力。\n基层治理｜发挥文化浸润作用，让文明理念转化为群众的自觉行动。\n论证速记｜村民自主创作 → 表达生活经历、增强文化认同 → 提高持续参与意愿 → 为乡村文化发展提供动力。\n复习时问自己：做法改变了什么？这种改变怎样支撑分论点？","source":"2026年11月25日《浙江综应第二课_作文素材卡片》第3页","date":"2026-11-25"}];
+   db.materials.unshift(...cards.filter(card=>!db.materials.some(m=>m.id===card.id)));
+   db.lessonTwoEssayCards=true;save();
+ }
  const list=$('matList');list.replaceChildren();const all=db.materials||[],q=$('matSearch').value.trim().toLowerCase();
  for(const m of all.filter(m=>[m.title,m.theme,m.fact,m.idea,m.source].join(' ').toLowerCase().includes(q))){
  const d=document.createElement('details');d.className='mat-card';
@@ -131,6 +137,7 @@ function renderMaterials(){
  if(point)add(head,'span',point,'mat-point');
  const body=add(d,'div','','mat-body');
  if(m.fact){add(body,'h4','案例事实');add(body,'p',m.fact)}
+ if(m.mechanism){add(body,'h4','机制分析（原创）');add(body,'p',m.mechanism)}
  if(idea){const lines=idea.split('\n');const example=lines.findIndex(v=>/^示范段[：:]/.test(v));if(example>0){add(body,'h4','分论点');add(body,'p',lines.slice(0,example).join('\n').replace(/^分论点[：:]/,''));add(body,'h4','作文示范段');add(body,'p',lines.slice(example).join('\n').replace(/^示范段[：:]/,''))}else{add(body,'h4','我的写法');add(body,'p',idea)}}
  if(m.source){let src=add(body,'details','','mat-source');add(src,'summary','查看出处');for(const line of m.source.split('\n')){const match=line.match(/^(.*?)\s*(https?:\/\/\S+)\s*$/i);if(match){const link=add(src,'a',match[1].trim()||match[2]);link.href=match[2];link.target='_blank';link.rel='noopener noreferrer'}else add(src,'p',line)}}
  const level=add(head,'small',m.mastery||'待学习','essay-level');
@@ -257,6 +264,7 @@ if(!sessions.some(x=>x.id===id)){db.logs[date]={...log,minutes:(Number(log.minut
 renderToday();stats();switchTab('records');}}
 })();
 </script></body></html>
+
 
 
 
